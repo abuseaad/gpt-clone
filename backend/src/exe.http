@@ -1,2 +1,10 @@
 ### Get all users
-GET http://localhost:3888/api/chat
+GET http://localhost:3888/api/chat/conversations
+
+### Create a conversation
+POST http://localhost:3888/api/chat/conversations
+Content-Type: application/json
+
+{
+    "question": "to day in arebic calander?"
+}

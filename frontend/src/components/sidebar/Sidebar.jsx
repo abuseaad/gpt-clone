@@ -39,6 +39,7 @@ export default function Sidebar() {
         </a>
         <a href='#' className={styles.item}>
           <LayoutGrid size={18} />
+
           <span>Apps</span>
         </a>
         <a href='#' className={styles.item}>
