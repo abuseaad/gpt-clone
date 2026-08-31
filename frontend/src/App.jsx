@@ -1,7 +1,11 @@
 import Sidebar from "./components/sidebar/Sidebar"
 import ChatHeader from "./components/chatHeader/ChatHeader"
-import ChatMessage from "./components/MessageList/ChatMessage"
+import ChatMessage from "./components/MessageLIist/ChatMessage";
+import { useState } from "react";
 function App() {
+  const [conversation. setConversation] = useState({})
+
+
   return (
     <div className="app">
       {/* sidebar */}
@@ -20,6 +24,7 @@ function App() {
 
         {/* messageList */}
         <ChatMessage/>
+        
       
 
 
