@@ -1,29 +1,29 @@
 import Sidebar from "./components/sidebar/Sidebar"
-import ChatHeader from "./components/chatHeader/ChatHeader"
-import ChatMessage from "./components/MessageLIist/ChatMessage";
 import { useState } from "react";
+import ChatHeader from "./components/chatHeader/ChatHeader";
 function App() {
-  const [conversation. setConversation] = useState({})
+  // const [conversation. setConversation] = useState({})
 
 
   return (
     <div className="app">
-      {/* sidebar */}
       <Sidebar/>
 
       <main className="chat">
+       <ChatHeader/>
+ 
 
 
 
         
         {/* chatHeader */}
-            <ChatHeader/>
+            
 
 
 
 
         {/* messageList */}
-        <ChatMessage/>
+        {/* <ChatMessage/> */}
         
       
 

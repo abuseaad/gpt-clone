@@ -1,7 +1,7 @@
 import { ChevronDown } from 'lucide-react';
 import styles from './ChatHeader.module.css';
 
-export default function ChatHeader() {
+function ChatHeader() {
   return (
     <header className={styles.header}>
       <div className={styles.left}>
@@ -14,3 +14,4 @@ export default function ChatHeader() {
     </header>
   );
 }
+ export default ChatHeader;

@@ -1,7 +1,5 @@
 import { User, Bot } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import styles from "./ChatMessage.module.css"
 
 export default function ChatMessage({ role, content }) {
@@ -13,6 +11,7 @@ export default function ChatMessage({ role, content }) {
         ) : (
           <Bot size={18} color='white' />
         )}
+
       </div>
       <div className={styles.content}>
         {role === 'user' ? (
