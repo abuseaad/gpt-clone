@@ -1,11 +1,12 @@
+// Step 1: Import service functions
 import { 
       createConversationService,
   getRecentConversationRows,
- } from '../service/chat.service.js';
+ } from '../service/3,chat.service.js';
 
 
 
-
+// Step 2: Handle POST /api/chat/conversations
 export async function createConversationController(req, res){
     try {
         const {question} = req.body
@@ -13,20 +14,18 @@ export async function createConversationController(req, res){
        res.status(201).json({
        success: true,
        message:'conversation posted successfully ',
-       Data: result,
+       data: result,
        });
     } catch (error) { 
         console.error(error.message);
            res.status(400).send(error.message);
+          //  next(error); // hand off to the error-handling middleware
         
     }
-    
-    
-
-    
+ 
 }
-
-export async function getConversationsController(req, res) {
+// Step 3: Handle GET /api/chat/conversations
+export async function getConversationsController(req, res, next) {
   try {
     const result = await getRecentConversationRows(100);
     res.status(200).json({
@@ -36,6 +35,7 @@ export async function getConversationsController(req, res) {
     });
   } catch (error) {
     throw error;
+      // next(error);
   }
 }
 

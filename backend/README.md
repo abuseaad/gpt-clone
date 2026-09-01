@@ -1,194 +1,115 @@
-# GPT Clone — Backend
+# GPT-Clone Backend
 
-A lightweight Node.js/Express backend that powers a ChatGPT-style conversational app. It stores chat history in MySQL and generates AI responses using Google's Gemini API, complete with conversation context/history for coherent multi-turn chats.
-
-## Features
-
-- 💬 **Conversational API** — Post a question and receive an AI-generated answer with full conversation persistence.
-- 🧠 **Context-aware responses** — Automatically includes recent conversation history when generating replies via Gemini.
-- 🗄️ **MySQL persistence** — All user questions and assistant answers are stored with role, content, token count, and timestamps.
-- ⚡ **Google Gemini integration** — Uses `@google/genai` for response generation, with configurable model via environment variables.
-- 🛡️ **Centralized error handling** — Custom middleware for consistent error responses across the API.
-- 📦 **Modular structure** — Clean separation of routes, controllers, services, and middleware for easy scaling.
+A Node.js/Express backend that stores chat conversations in MySQL and generates
+assistant replies using the Google Gemini API.
 
 ## Tech Stack
 
-| Layer            | Technology            |
-|-------------------|------------------------|
-| Runtime            | Node.js                |
-| Framework          | Express.js             |
-| Database           | MySQL (`mysql2`)       |
-| AI Provider        | Google Gemini (`@google/genai`) |
-| Environment Config | dotenv                 |
+- **Runtime:** Node.js (ESM modules)
+- **Framework:** Express.js
+- **Database:** MySQL (via `mysql2/promise`)
+- **AI Provider:** Google Gemini (`@google/genai`)
+- **Other:** `cors`, `dotenv`
 
 ## Project Structure
 
 ```
 backend/
 ├── db/
-│   └── db.config.js              # MySQL connection pool setup
+│   ├── db.config.js       # MySQL connection pool
+│   └── schema.sql         # Database schema
 ├── src/
 │   ├── api/
-│   │   ├── admin/                 # Admin-related routes (WIP)
+│   │   ├── admin/         # Reserved for future auth/user routes
 │   │   ├── chat/
-│   │   │   ├── controller/
-│   │   │   │   └── chat.controller.js   # Request handlers for chat endpoints
-│   │   │   ├── service/
-│   │   │   │   └── chat.service.js      # Business logic + Gemini integration
-│   │   │   └── chat.routes.js           # /api/chat routes
-│   │   └── main.routes.js               # Root API router
-│   ├── middleware/
-│   │   └── error-handler.js             # Global error-handling middleware
-│   └── utilitis/                        # Shared utility functions
-├── .env                          # Environment variables (not committed)
+│   │   │   ├── controller/chat.controller.js
+│   │   │   ├── service/chat.service.js
+│   │   │   └── chat.routes.js
+│   │   └── main.routes.js # Aggregates all feature routers
+│   └── middleware/
+│       └── error-handler.js
+├── .env                    # Environment variables (not committed)
 ├── .gitignore
-├── index.js                      # App entry point
-├── package.json
-└── README.md
+├── index.js                 # App entrypoint
+└── package.json
 ```
 
-## Getting Started
+## Setup
 
-### Prerequisites
+1. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-- Node.js (v18+)
-- MySQL database instance
-- A Google Gemini API key
+2. **Create the database**
+   ```bash
+   mysql -u root -p -e "CREATE DATABASE `chatgpt-clone`;"
+   mysql -u root -p chatgpt-clone < db/schema.sql
+   ```
 
-### Installation
+3. **Configure environment variables**
 
-```bash
-git clone <your-repo-url>
-cd backend
-npm install
-```
+   Copy `.env.example` to `.env` and fill in your own values:
+   ```env
+   # MySQL
+   DB_HOST=localhost
+   DB_USER=your_db_user
+   DB_PASSWORD=your_db_password
+   DB_DATABASE=chatgpt-clone
 
-### Environment Variables
+   # Gemini
+   GEMINI_API_KEY=your_gemini_api_key
+   GEMINI_MODEL=gemini-2.0-flash-lite
+   ```
+   Never commit a real `.env` file — it's already listed in `.gitignore`.
 
-Create a `.env` file in the project root:
+4. **Run the server**
+   ```bash
+   node index.js
+   ```
+   The server starts on `http://localhost:3888`.
 
-```env
-PORT=3888
+## API Endpoints
 
-# Database
-DB_HOST=localhost
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
-DB_NAME=your_db_name
+Base path: `/api/chat`
 
-# Gemini
-GEMINI_API_KEY=your_gemini_api_key
-GEMINI_MODEL=gemini-3.1-flash-lite
-```
+| Method | Path            | Description                                  |
+|--------|-----------------|-----------------------------------------------|
+| POST   | `/conversations` | Send a question, get back the saved user + assistant messages |
+| GET    | `/conversations` | Fetch the last 100 messages                   |
 
-### Database Setup
-
-Create a `conversations` table:
-
-```sql
-CREATE TABLE conversations (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  role ENUM('user', 'assistant') NOT NULL,
-  content TEXT NOT NULL,
-  token_count INT DEFAULT 0,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Run the Server
-
-```bash
-node index.js
-```
-
-The server will start on `http://localhost:3888` (or the port set in `.env`).
-
-## API Reference
-
-Base URL: `/api/chat`
-
-### Create a Conversation
-
-Sends a question and receives an AI-generated answer. Both the question and the answer are saved to the database.
-
-```
-POST /api/chat/conversations
-```
-
-**Request Body**
+### POST `/api/chat/conversations`
+**Request body**
 ```json
-{
-  "question": "What is the capital of France?"
-}
+{ "question": "What is the capital of France?" }
 ```
-
-**Response — `201 Created`**
+**Response**
 ```json
 {
   "success": true,
   "message": "conversation posted successfully",
-  "Data": {
-    "userConversation": {
-      "id": 1,
-      "role": "user",
-      "content": "What is the capital of France?",
-      "tokenCount": 0,
-      "createdAt": "2026-08-30T10:00:00.000Z"
-    },
-    "assistantConversation": {
-      "id": 2,
-      "role": "assistant",
-      "content": "The capital of France is Paris.",
-      "tokenCount": 12,
-      "createdAt": "2026-08-30T10:00:01.000Z"
-    }
+  "data": {
+    "userConversation": { "id": 1, "role": "user", "content": "...", "tokenCount": 0, "createdAt": "..." },
+    "assistantConversation": { "id": 2, "role": "assistant", "content": "...", "tokenCount": 42, "createdAt": "..." }
   }
 }
 ```
 
-### Get Recent Conversations
+### GET `/api/chat/conversations`
+Returns the last 100 messages, oldest first.
 
-Fetches the most recent conversation messages (default limit: 100), ordered chronologically.
+## Architecture Notes
 
-```
-GET /api/chat/conversations
-```
-
-**Response — `200 OK`**
-```json
-{
-  "success": true,
-  "message": "Conversations fetched successfully.",
-  "data": [
-    {
-      "id": 1,
-      "role": "user",
-      "content": "What is the capital of France?",
-      "created_at": "2026-08-30T10:00:00.000Z"
-    }
-  ]
-}
-```
-
-## Error Handling
-
-All errors are caught and formatted by a centralized middleware, returning a consistent JSON shape:
-
-```json
-{
-  "status": false,
-  "message": "error message here"
-}
-```
+- All chat history currently lives in a single shared `conversations` table with
+  no `user_id` or `conversation_id` — this is a single-user, single-thread MVP.
+  Multi-user/multi-thread support requires a schema change before auth is added.
+- Errors are passed via `next(error)` to the centralized `errorHandler` middleware,
+  which respects `err.status` (defaulting to 500) and returns a consistent JSON shape.
 
 ## Roadmap
 
-- [ ] Complete admin module
-- [ ] Add authentication/authorization
-- [ ] Add pagination to conversation history
-- [ ] Add unit/integration tests
-- [ ] Add streaming responses support
+- [❌] Add `users` table + authentication
+- [❌] Add `conversation_id` to support multiple chat threads per user
+- [❌] Request validation middleware
+- [❌] Automated tests
 
-## License
-
-This project is currently unlicensed. Add a license of your choice before publishing publicly.

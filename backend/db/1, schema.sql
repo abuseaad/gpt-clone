@@ -1,3 +1,6 @@
+-- Create the conversations table if it doesn't already exist
+
+
 CREATE TABLE IF NOT EXISTS conversations (
 id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 role ENUM('user', 'assistant') NOT NULL,
