@@ -6,3 +6,4 @@ export const errorHandler = (err, req, res, next) => {
         message: err.status || "something worng try again later",
     });
 };
+ 

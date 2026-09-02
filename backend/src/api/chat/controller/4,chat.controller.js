@@ -7,14 +7,14 @@ import {
 
 
 // Step 2: Handle POST /api/chat/conversations
-export async function createConversationController(req, res){
+export async function createConversationController(req, res, next){
     try {
         const {question} = req.body
         const result = await createConversationService(question);
        res.status(201).json({
        success: true,
        message:'conversation posted successfully ',
-       data: result,
+       data: result, 
        });
     } catch (error) { 
         console.error(error.message);
@@ -41,3 +41,4 @@ export async function getConversationsController(req, res, next) {
 
 
 
+  

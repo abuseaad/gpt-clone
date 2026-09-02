@@ -2,13 +2,16 @@
 import express from "express"
 import chatRouter from "./chat/5,chat.routes.js";
 
-// Step 2: Create the aggregating router
+// Step 2: Create the aggregating router(.Router from express)
 const mainRoutes = express.Router();
 
 
 // Step 3: Mount feature routers under their base paths
 // /api/chat
 mainRoutes.use('/chat', chatRouter);
+
+// /api/admin
+// mainRoutes.use('/admin', chatRouter);
 
 
 // Step 4: Export for index.js

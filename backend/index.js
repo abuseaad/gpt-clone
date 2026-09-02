@@ -7,12 +7,13 @@ import cors from "cors";
 
 // Step 3: Import your own modules
 import db from "./db/2,db.config.js";
-import mainRoutes from "./src/api/main.routes.js";
-import { errorHandler } from "./src/middleware/error-handler.js";
+import mainRoutes from "./src/api/6,main.routes.js";
+import { errorHandler } from "./src/middleware/7,error-handler.js";
 
 
 // Step 4: Initialize the Express app
-const app = express();
+const app = express(); 
+
 
 // Step 5: Register global middleware (CORS, body parsing)
 app.use(
@@ -21,7 +22,7 @@ app.use(
   }),
 );
 
-app.use(express.json());
+app.use(express.json());  //beultinmeddleware
 // app.use(express.urlencoded({ extended: true }));
 
 // Step 6: Register application routes
@@ -43,7 +44,7 @@ async function startServer() {
       if (err) {
         throw err;
       }
-      console.log("Server is running on port 3888");
+      console.log("Server is running on port http://localhost:3888");
     });
   } catch (error) {
     console.error("Database connection failed:", error.message);
