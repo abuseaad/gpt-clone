@@ -17,9 +17,9 @@ export async function createConversationController(req, res, next){
        data: result, 
        });
     } catch (error) { 
-        console.error(error.message);
-           res.status(400).send(error.message);
-          //  next(error); // hand off to the error-handling middleware
+        // console.error(error.message);
+          //  res.status(400).send(error.message);
+           next(error); // hand off to the error-handling middleware
         
     }
  

@@ -10,9 +10,7 @@ const geminiClient = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 export const getRecentConversationRows = async (limit = 5) => {
   const normalizedLimit = Number.parseInt(limit, 10);
   const safeLimit =
-    Number.isNaN(normalizedLimit) || normalizedLimit <= 0
-      ? 20
-      : normalizedLimit;
+    Number.isNaN(normalizedLimit) || normalizedLimit <= 0 ? 20 : normalizedLimit;
   const [rows] = await db.execute(
     `SELECT id, role, content, created_at
      FROM conversations
@@ -33,7 +31,20 @@ export const generateAssistantAnswer = async ({ historyRows, question }) => {
   const chat = geminiClient.chats.create({
     model: GEMINI_MODEL,
     config: {
-      maxOutputTokens: 500,
+      maxOutputTokens: 1000,
+      systemInstruction: `**Role:** You are a senior physician and medical expert.
+
+**Your primary responsibility:** Assist customers/users **only with medical and healthcare-related questions and concepts**.
+
+* Provide clear, accurate, evidence-based medical information.
+* Explain medical concepts in simple language when appropriate.
+* For clinical questions, include relevant differential diagnoses, investigations, management principles, and important red flags when appropriate.
+* Use professional medical terminology, but explain difficult terms clearly.
+* Do not provide assistance with unrelated topics such as programming, technology, entertainment, finance, or general non-medical questions.
+* If a user asks about a non-medical topic, politely explain that your role is limited to medical and healthcare-related assistance.
+* Do not replace an in-person physician; for emergencies or potentially serious conditions, advise the user to seek appropriate medical care.
+* Prioritize patient safety and avoid unsupported or misleading medical claims.
+.`,
     },
     history: formattedHistory,
   });

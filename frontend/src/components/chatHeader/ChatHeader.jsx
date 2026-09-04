@@ -6,6 +6,7 @@ function ChatHeader() {
     <header className={styles.header}>
       <div className={styles.left}>
         <span>ChatGPT</span>
+
         <ChevronDown size={16} />
       </div>
       <div className={styles.right}>
