@@ -7,5 +7,5 @@ POST http://localhost:3888/api/chat/conversations
 Content-Type: application/json
 
 {
-    "question": "tell me about the history of AI"
+    "question": " What is the capital of France?"
 }

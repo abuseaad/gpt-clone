@@ -8,6 +8,7 @@ function ChatHeader() {
         <span>ChatGPT</span>
 
         <ChevronDown size={16} />
+       
       </div>
       <div className={styles.right}>
         <div className={styles.avatar}>IT</div>
