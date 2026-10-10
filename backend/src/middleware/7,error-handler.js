@@ -1,5 +1,6 @@
 // Step 1: Format and send any error passed via next(error)
 export const errorHandler = (err, req, res, next) => {
+  console.error(req.method, req.originalUrl, "|", error.sql, "|", error.sqlMessage);
   console.log('error in request:', err.message);
 
   // Our own errors use statusCode; older code in this project uses status
