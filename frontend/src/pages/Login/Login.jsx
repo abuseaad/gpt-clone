@@ -55,8 +55,8 @@ export default function Login() {
         <div className={styles.logo}>
           <Bot size={24} />
         </div>
-        <h1 className={styles.title}>Welcome back</h1>
-        <p className={styles.subtitle}>Log in to continue to your chats</p>
+        <h1 className={styles.title}>SadikGPT</h1>
+        <p className={styles.subtitle}>Only for testing purpose</p>
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           {location.state?.registered && (
@@ -83,7 +83,7 @@ export default function Login() {
               className={`${styles.input} ${errors.email ? styles.inputError : ""}`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="sadu@example.com"
               autoComplete="email"
               aria-invalid={errors.email ? "true" : "false"}
               aria-describedby={errors.email ? "email-error" : undefined}

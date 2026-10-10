@@ -132,11 +132,11 @@ export default function Register() {
           )}
 
           <div className={styles.row}>
-            {renderField("firstName", "First name", "text", "John", "given-name")}
-            {renderField("lastName", "Last name", "text", "Doe", "family-name")}
+            {renderField("firstName", "First name", "text", "sadik", "given-name")}
+            {renderField("lastName", "Last name", "text", "Jemal", "family-name")}
           </div>
 
-          {renderField("email", "Email address", "email", "you@example.com", "email")}
+          {renderField("email", "Email address", "email", "sadu@example.com", "email")}
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="password">
