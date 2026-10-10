@@ -1,11 +1,256 @@
-### Get all users
-GET http://localhost:3888/api/chat/conversations
-
-### Create a conversation
-
-POST http://localhost:3888/api/chat/conversations
+### Register (should be 201)
+POST http://localhost:3888/api/auth/register
 Content-Type: application/json
 
 {
-    "question": " What is the capital of France?"
+  "firstName": "Test",
+  "lastName": "User",
+  "email": "test.user@example.com",
+  "password": "Test1234"
 }
+
+### Register same email again (should be 400)
+POST http://localhost:3888/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Test",
+  "lastName": "User",
+  "email": "test.user@example.com",
+  "password": "Test1234"
+}
+
+### Register with bad data (should be 400)
+POST http://localhost:3888/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Al",
+  "lastName": "U",
+  "email": "bad",
+  "password": "123"
+}
+
+### Login (should be 200 with a token)
+POST http://localhost:3888/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test.user@example.com",
+  "password": "Test1234"
+}
+
+### Login with wrong password (should be 401)
+POST http://localhost:3888/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test.user@example.com",
+  "password": "wrongpassword"
+}
+
+
+### Login and remember the token
+# @name login
+POST http://localhost:3888/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test.user@example.com",
+  "password": "Test1234"
+}
+
+### Who am I? Send the request above first (should be 200)
+GET http://localhost:3888/api/auth/me
+Authorization: Bearer {{login.response.body.$.token}}
+
+### No token (should be 401)
+GET http://localhost:3888/api/auth/me
+
+### Fake token (should be 401)
+GET http://localhost:3888/api/auth/me
+Authorization: Bearer abc.def.ghi
+
+
+### Register a SECOND user (should be 201)
+POST http://localhost:3888/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Second",
+  "lastName": "Person",
+  "email": "second.person@example.com",
+  "password": "Test1234"
+}
+
+### Login as the second user
+# @name login2
+POST http://localhost:3888/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "second.person@example.com",
+  "password": "Test1234"
+}
+
+### First user: create a chat (201)
+POST http://localhost:3888/api/chat/chats
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Headache questions"
+}
+
+### First user: create a chat with no title (201, title becomes "New chat")
+POST http://localhost:3888/api/chat/chats
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{}
+
+### First user: list chats (200, newest first)
+GET http://localhost:3888/api/chat/chats
+Authorization: Bearer {{login.response.body.$.token}}
+
+### Second user: list chats (200, empty list - cannot see the first user's chats)
+GET http://localhost:3888/api/chat/chats
+Authorization: Bearer {{login2.response.body.$.token}}
+
+### No token (401)
+GET http://localhost:3888/api/chat/chats
+
+### Bad title (400)
+POST http://localhost:3888/api/chat/chats
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": 123
+}
+
+
+### Register a SECOND user (should be 201)
+POST http://localhost:3888/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Second",
+  "lastName": "Person",
+  "email": "second.person@example.com",
+  "password": "Test1234"
+}
+
+### Login as the second user
+# @name login2
+POST http://localhost:3888/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "second.person@example.com",
+  "password": "Test1234"
+}
+
+### First user: create a chat (201)
+POST http://localhost:3888/api/chat/chats
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Headache questions"
+}
+
+### First user: create a chat with no title (201, title becomes "New chat")
+POST http://localhost:3888/api/chat/chats
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{}
+
+### First user: list chats (200, newest first)
+GET http://localhost:3888/api/chat/chats
+Authorization: Bearer {{login.response.body.$.token}}
+
+### Second user: list chats (200, empty list - cannot see the first user's chats)
+GET http://localhost:3888/api/chat/chats
+Authorization: Bearer {{login2.response.body.$.token}}
+
+### No token (401)
+GET http://localhost:3888/api/chat/chats
+
+### Bad title (400)
+POST http://localhost:3888/api/chat/chats
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": 123
+}
+
+### Create a chat and remember it
+# @name chat1
+POST http://localhost:3888/api/chat/chats
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{}
+
+### Send a message (201, real Gemini answer, takes a few seconds)
+POST http://localhost:3888/api/chat/chats/{{chat1.response.body.$.data.id}}/messages
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "question": "What are the common causes of a headache?"
+}
+
+### Follow-up that needs context (the answer should refer to the headache causes)
+POST http://localhost:3888/api/chat/chats/{{chat1.response.body.$.data.id}}/messages
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "question": "Which of those is the most dangerous?"
+}
+
+### Open the chat (200, 4 messages)
+GET http://localhost:3888/api/chat/chats/{{chat1.response.body.$.data.id}}/messages
+Authorization: Bearer {{login.response.body.$.token}}
+
+### List chats (the title is now your first question)
+GET http://localhost:3888/api/chat/chats
+Authorization: Bearer {{login.response.body.$.token}}
+
+### SECOND user opens the first user's chat (404 "Chat not found")
+GET http://localhost:3888/api/chat/chats/{{chat1.response.body.$.data.id}}/messages
+Authorization: Bearer {{login2.response.body.$.token}}
+
+### SECOND user tries to delete it (404)
+DELETE http://localhost:3888/api/chat/chats/{{chat1.response.body.$.data.id}}
+Authorization: Bearer {{login2.response.body.$.token}}
+
+### Empty question (400)
+POST http://localhost:3888/api/chat/chats/{{chat1.response.body.$.data.id}}/messages
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "question": "   "
+}
+
+### Rename (200)
+PATCH http://localhost:3888/api/chat/chats/{{chat1.response.body.$.data.id}}
+Authorization: Bearer {{login.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "Headache causes"
+}
+
+### Delete (200)
+DELETE http://localhost:3888/api/chat/chats/{{chat1.response.body.$.data.id}}
+Authorization: Bearer {{login.response.body.$.token}}
+
+### Open the deleted chat (404)
+GET http://localhost:3888/api/chat/chats/{{chat1.response.body.$.data.id}}/messages
+Authorization: Bearer {{login.response.body.$.token}}

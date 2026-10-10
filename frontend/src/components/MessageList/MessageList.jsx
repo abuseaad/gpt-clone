@@ -3,10 +3,12 @@ import styles from "./MessageList.module.css";
 import { Bot } from "lucide-react";
 
 
-export default function MessageList({lastMessageRef, isLoading, conversations }) {
+export default function MessageList({lastMessageRef, isLoading, isOpeningChat, conversations }) {
   return (
     <div className={styles.messages}>
-      {conversations.length === 0 ? (
+      {isOpeningChat ? (
+        <div className={styles.empty} role="status"> Loading chat…</div>
+      ) : conversations.length === 0 ? (
         <div className={styles.empty}> What are you working on?</div>
       ) : (
         conversations.map((msg) => (
@@ -34,4 +36,3 @@ export default function MessageList({lastMessageRef, isLoading, conversations })
     </div>
   );
 }
-

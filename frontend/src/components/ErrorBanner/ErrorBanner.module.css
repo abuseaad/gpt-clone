@@ -1,0 +1,53 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: calc(100% - 48px);
+  max-width: 752px; /* same width as the input box below it */
+  margin: 0 auto;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+}
+
+.retry {
+  background: none;
+  border: 1px solid rgba(252, 165, 165, 0.5);
+  border-radius: 6px;
+  color: #fca5a5;
+  font-family: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.retry:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.close {
+  background: none;
+  border: none;
+  color: #fca5a5;
+  cursor: pointer;
+  display: flex;
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.close:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}

@@ -9,5 +9,17 @@ const db = mysql.createPool({
   database: process.env.DB_DATABASE,
 });
 
-// Step 3: Export the pool so any file can run queries
+// Step 3: Safe helper used by the auth service (requires SQL text and parameters)
+export const safeExecute = async (sql, params) => {
+  if (typeof sql !== 'string' || sql.trim().length === 0) {
+    throw new Error('SQL query must be a non-empty string');
+  }
+  if (params === undefined || params === null || typeof params !== 'object') {
+    throw new Error('SQL parameters must be an array or object');
+  }
+  const [result] = await db.execute(sql, params);
+  return result;
+};
+
+// Step 4: Export the pool so any file can run queries
 export default db;

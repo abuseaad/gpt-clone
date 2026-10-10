@@ -2,69 +2,217 @@ import Sidebar from "./components/sidebar/Sidebar";
 import { useEffect, useState, useRef } from "react";
 import ChatHeader from "./components/ChatHeader/ChatHeader";
 import MessageList from "./components/MessageList/MessageList";
-import axios from "axios";
 import ChatInput from "./components/ChatInput/ChatInput";
+import ErrorBanner from "./components/ErrorBanner/ErrorBanner";
+import client, { getErrorMessage } from "./api/client";
 
-// Grab the API base URL from Vite's environment variables, defaulting to localhost for local testing
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3888";
+// Screens wider than this show the sidebar open by default
+const DESKTOP_QUERY = "(min-width: 769px)";
+
+// Ask the server for THIS user's chats (newest activity first)
+const fetchChats = () =>
+  client.get("/api/chat/chats").then(({ data }) => data.data);
 
 function App() {
-  const [conversations, setConversations] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const lastMessageRef = useRef(null);
+  // --- Chat history (sidebar) ---
+  const [chats, setChats] = useState([]);
+  const [chatsLoading, setChatsLoading] = useState(true);
+  const [chatsError, setChatsError] = useState("");
 
-  async function fetchConversation() {
+  // --- The chat that is open ---
+  const [activeChatId, setActiveChatId] = useState(null); // null = a new, empty chat
+  const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false); // waiting for the AI
+  const [isOpeningChat, setIsOpeningChat] = useState(false);
+  const [notice, setNotice] = useState(null); // { message, onRetry }
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(
+    () => window.matchMedia(DESKTOP_QUERY).matches,
+  );
+
+  const lastMessageRef = useRef(null);
+  const openRequestRef = useRef(0); // lets us ignore out-of-date "open chat" replies
+
+  // ---------- Sidebar ----------
+  const toggleSidebar = () => setIsSidebarOpen((open) => !open);
+
+  const closeSidebarOnMobile = () => {
+    if (!window.matchMedia(DESKTOP_QUERY).matches) setIsSidebarOpen(false);
+  };
+
+  // ---------- Chat history ----------
+  const reloadChats = () => {
+    setChatsLoading(true);
+    setChatsError("");
+    fetchChats()
+      .then(setChats)
+      .catch((error) => setChatsError(getErrorMessage(error)))
+      .finally(() => setChatsLoading(false));
+  };
+
+  // ---------- New chat ----------
+  // Only clears the screen. The chat is created on the server when the user
+  // sends the first message, and old chats are never deleted.
+  const handleNewChat = () => {
+    if (isLoading) return;
+    openRequestRef.current += 1; // cancel any chat that is still loading
+    setActiveChatId(null);
+    setMessages([]);
+    setIsOpeningChat(false);
+    setNotice(null);
+    closeSidebarOnMobile();
+  };
+
+  // ---------- Open an old chat ----------
+  async function handleSelectChat(chatId) {
+    if (isLoading) return;
+    closeSidebarOnMobile();
+    if (chatId === activeChatId) return;
+
+    const requestId = ++openRequestRef.current;
+    setActiveChatId(chatId);
+    setMessages([]);
+    setIsOpeningChat(true);
+    setNotice(null);
+
     try {
-      const { data } = await axios.get(
-        `${API_BASE_URL}/api/chat/conversations`
-      );
-      setConversations(data.data);
+      const { data } = await client.get(`/api/chat/chats/${chatId}/messages`);
+      if (requestId !== openRequestRef.current) return; // user clicked something else
+      setMessages(data.data);
     } catch (error) {
-      console.log(error.message);
+      if (requestId !== openRequestRef.current) return;
+      setNotice({
+        message: `Could not open this chat. ${getErrorMessage(error)}`,
+        onRetry: () => handleSelectChat(chatId),
+      });
+    } finally {
+      if (requestId === openRequestRef.current) setIsOpeningChat(false);
     }
   }
 
+  // ---------- Send a message ----------
   async function handleSubmit(question) {
-    if (!question.trim()) {
+    const text = question.trim();
+    if (!text || isLoading) {
       return;
     }
 
-    const tempQuestion = {
-      id: Date.now(),
-      content: question.trim(),
-      role: 'user',
-    };
-    setConversations((prev) => [...prev, tempQuestion]);
+    setNotice(null);
+    setIsLoading(true);
+
+    // Show the user's message immediately (replaced by the saved one later)
+    const tempId = `temp-${Date.now()}`;
+    setMessages((prev) => [...prev, { id: tempId, role: "user", content: text }]);
+
+    let chatId = activeChatId;
+    let createdHere = false;
 
     try {
-      setIsLoading(true);
-      const { data } = await axios.post(`${API_BASE_URL}/api/chat/conversations`, {
-        question: question.trim(),
+      // First message of a new chat? Create the chat on the server first.
+      if (chatId === null) {
+        const { data } = await client.post("/api/chat/chats", {});
+        chatId = data.data.id;
+        createdHere = true;
+        setActiveChatId(chatId);
+      }
+
+      const { data } = await client.post(`/api/chat/chats/${chatId}/messages`, {
+        question: text,
       });
-      setConversations((prev) => [...prev, data?.data?.assistantConversation]);
+      const { userMessage, assistantMessage, chat } = data.data;
+
+      // Replace the temporary message with the saved ones
+      setMessages((prev) => [
+        ...prev.filter((m) => m.id !== tempId),
+        userMessage,
+        assistantMessage,
+      ]);
+
+      // Put this chat at the top of the history (new title included)
+      setChats((prev) => [chat, ...prev.filter((c) => c.id !== chat.id)]);
     } catch (error) {
-      console.log(error.message);
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+
+      // Don't leave an empty chat behind if the very first message failed
+      if (createdHere) {
+        client.delete(`/api/chat/chats/${chatId}`).catch(() => {});
+        setActiveChatId(null);
+      }
+
+      setNotice({
+        message: `Your message could not be sent. ${getErrorMessage(error)}`,
+        onRetry: () => handleSubmit(text),
+      });
     } finally {
       setIsLoading(false);
     }
   }
 
+  // Keep the newest message in view
   useEffect(() => {
-    lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [conversations, isLoading]);
+    lastMessageRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isLoading]);
 
+  // Load this user's chat history when the page opens
   useEffect(() => {
-    fetchConversation();
+    let cancelled = false;
+    fetchChats()
+      .then((list) => {
+        if (!cancelled) setChats(list);
+      })
+      .catch((error) => {
+        if (!cancelled) setChatsError(getErrorMessage(error));
+      })
+      .finally(() => {
+        if (!cancelled) setChatsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Open the sidebar when the window becomes wide, close it when it becomes narrow
+  useEffect(() => {
+    const media = window.matchMedia(DESKTOP_QUERY);
+    const handleChange = (event) => setIsSidebarOpen(event.matches);
+    media.addEventListener("change", handleChange);
+    return () => media.removeEventListener("change", handleChange);
   }, []);
 
   return (
     <div className="app">
-      <Sidebar />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onToggle={toggleSidebar}
+        chats={chats}
+        chatsLoading={chatsLoading}
+        chatsError={chatsError}
+        onReloadChats={reloadChats}
+        activeChatId={activeChatId}
+        onNewChat={handleNewChat}
+        onSelectChat={handleSelectChat}
+        disabled={isLoading}
+      />
       <main className="chat">
-        <ChatHeader />
-        <MessageList lastMessageRef={lastMessageRef} isLoading={isLoading} conversations={conversations} />
-        <ChatInput isLoading={isLoading} handleSubmit={handleSubmit} />
-      </main> 
+        <ChatHeader onOpenSidebar={toggleSidebar} />
+        <MessageList
+          lastMessageRef={lastMessageRef}
+          isLoading={isLoading}
+          isOpeningChat={isOpeningChat}
+          conversations={messages}
+        />
+        {notice && (
+          <ErrorBanner
+            message={notice.message}
+            onRetry={notice.onRetry}
+            onDismiss={() => setNotice(null)}
+          />
+        )}
+        <ChatInput
+          isLoading={isLoading || isOpeningChat}
+          handleSubmit={handleSubmit}
+        />
+      </main>
     </div>
   );
 }
