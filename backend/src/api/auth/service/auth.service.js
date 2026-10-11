@@ -23,7 +23,7 @@ const normalizeEmail = email => email.trim().toLowerCase();
  */
 export const checkUserExists = async email => {
   const normalizedEmail = normalizeEmail(email);
-  const sql = 'SELECT id FROM users WHERE email = ? LIMIT 1';
+  const sql = 'SELECT user_id FROM users WHERE email = ? LIMIT 1';
   const rows = await safeExecute(sql, [normalizedEmail]);
   return rows.length > 0;
 };
